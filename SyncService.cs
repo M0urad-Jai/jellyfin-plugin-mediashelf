@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Concurrent;
-using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using MediaBrowser.Controller.Entities;
@@ -24,13 +23,13 @@ public class SyncService : IHostedService
     public SyncService(
         ILibraryManager libraryManager,
         IUserDataManager userDataManager,
-        IHttpClientFactory httpClientFactory,
+        MediaShelfClient client,
         ILogger<SyncService> logger)
     {
         _libraryManager = libraryManager;
         _userDataManager = userDataManager;
         _logger = logger;
-        _client = new MediaShelfClient(httpClientFactory, logger);
+        _client = client;
     }
 
     public Task StartAsync(CancellationToken cancellationToken)
@@ -57,7 +56,7 @@ public class SyncService : IHostedService
 
         try
         {
-            await _client.AddToCollectionAsync(resource, ItemMapper.ToEntry(e.Item)).ConfigureAwait(false);
+            await _client.AddToCollectionAsync(config.ServerUrl, config.ApiToken, resource, ItemMapper.ToEntry(e.Item)).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -75,10 +74,10 @@ public class SyncService : IHostedService
             switch (e.Item)
             {
                 case Movie movie when config.SyncPlayback:
-                    await HandlePlaybackAsync("movies", movie, e).ConfigureAwait(false);
+                    await HandlePlaybackAsync(config.ServerUrl, config.ApiToken, "movies", movie, e).ConfigureAwait(false);
                     break;
                 case Episode episode when config.SyncPlayback && episode.Series is not null:
-                    await HandleEpisodeAsync(episode, e).ConfigureAwait(false);
+                    await HandleEpisodeAsync(config.ServerUrl, config.ApiToken, episode, e).ConfigureAwait(false);
                     break;
             }
 
@@ -89,7 +88,7 @@ public class SyncService : IHostedService
                 {
                     var entry = ItemMapper.ToEntry(e.Item);
                     entry["rating"] = Math.Round(e.UserData.Rating.Value / 2.0, 1); // Jellyfin 1-10 -> MediaShelf 0-5
-                    await _client.RateAsync(resource, entry).ConfigureAwait(false);
+                    await _client.RateAsync(config.ServerUrl, config.ApiToken, resource, entry).ConfigureAwait(false);
                 }
             }
         }
@@ -99,11 +98,11 @@ public class SyncService : IHostedService
         }
     }
 
-    private async Task HandlePlaybackAsync(string resource, BaseItem item, UserDataSaveEventArgs e)
+    private async Task HandlePlaybackAsync(string serverUrl, string apiToken, string resource, BaseItem item, UserDataSaveEventArgs e)
     {
         if (e.UserData.Played && e.SaveReason is UserDataSaveReason.TogglePlayed or UserDataSaveReason.PlaybackFinished)
         {
-            await _client.AddHistoryAsync(resource, ItemMapper.ToEntry(item)).ConfigureAwait(false);
+            await _client.AddHistoryAsync(serverUrl, apiToken, resource, ItemMapper.ToEntry(item)).ConfigureAwait(false);
             return;
         }
 
@@ -112,10 +111,10 @@ public class SyncService : IHostedService
 
         var entry = ItemMapper.ToEntry(item);
         entry["progress"] = Math.Round(100.0 * e.UserData.PlaybackPositionTicks / item.RunTimeTicks.Value, 1);
-        await _client.UpdatePlaybackAsync(resource, entry).ConfigureAwait(false);
+        await _client.UpdatePlaybackAsync(serverUrl, apiToken, resource, entry).ConfigureAwait(false);
     }
 
-    private async Task HandleEpisodeAsync(Episode episode, UserDataSaveEventArgs e)
+    private async Task HandleEpisodeAsync(string serverUrl, string apiToken, Episode episode, UserDataSaveEventArgs e)
     {
         var series = episode.Series;
         if (series is null) return;
@@ -125,7 +124,7 @@ public class SyncService : IHostedService
             var entry = ItemMapper.ToEntry(series);
             if (episode.ParentIndexNumber.HasValue) entry["season"] = episode.ParentIndexNumber.Value;
             if (episode.IndexNumber.HasValue) entry["episode"] = episode.IndexNumber.Value;
-            await _client.AddHistoryAsync("shows", entry).ConfigureAwait(false);
+            await _client.AddHistoryAsync(serverUrl, apiToken, "shows", entry).ConfigureAwait(false);
         }
 
         // Per-episode playback percentage doesn't map cleanly onto MediaShelf's

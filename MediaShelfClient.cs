@@ -12,33 +12,32 @@ namespace Jellyfin.Plugin.MediaShelf;
 public class MediaShelfClient
 {
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly ILogger _logger;
+    private readonly ILogger<MediaShelfClient> _logger;
 
-    public MediaShelfClient(IHttpClientFactory httpClientFactory, ILogger logger)
+    public MediaShelfClient(IHttpClientFactory httpClientFactory, ILogger<MediaShelfClient> logger)
     {
         _httpClientFactory = httpClientFactory;
         _logger = logger;
     }
 
-    public Task AddToCollectionAsync(string resource, JsonObject entry) =>
-        PostAsync("/api/v1/sync/collection", new JsonObject { [resource] = new JsonArray(entry) });
+    public Task AddToCollectionAsync(string serverUrl, string apiToken, string resource, JsonObject entry) =>
+        PostAsync(serverUrl, apiToken, "/api/v1/sync/collection", new JsonObject { [resource] = new JsonArray(entry) });
 
-    public Task AddHistoryAsync(string resource, JsonObject entry) =>
-        PostAsync("/api/v1/sync/history", new JsonObject { [resource] = new JsonArray(entry) });
+    public Task AddHistoryAsync(string serverUrl, string apiToken, string resource, JsonObject entry) =>
+        PostAsync(serverUrl, apiToken, "/api/v1/sync/history", new JsonObject { [resource] = new JsonArray(entry) });
 
-    public Task UpdatePlaybackAsync(string resource, JsonObject entry)
+    public Task UpdatePlaybackAsync(string serverUrl, string apiToken, string resource, JsonObject entry)
     {
         entry["type"] = resource;
-        return PostAsync("/api/v1/sync/playback", entry);
+        return PostAsync(serverUrl, apiToken, "/api/v1/sync/playback", entry);
     }
 
-    public Task RateAsync(string resource, JsonObject entry) =>
-        PostAsync("/api/v1/sync/ratings", new JsonObject { [resource] = new JsonArray(entry) });
+    public Task RateAsync(string serverUrl, string apiToken, string resource, JsonObject entry) =>
+        PostAsync(serverUrl, apiToken, "/api/v1/sync/ratings", new JsonObject { [resource] = new JsonArray(entry) });
 
-    private async Task PostAsync(string path, JsonNode body)
+    private async Task PostAsync(string serverUrl, string apiToken, string path, JsonNode body)
     {
-        var config = Plugin.Instance?.Configuration;
-        if (config is null || string.IsNullOrWhiteSpace(config.ServerUrl) || string.IsNullOrWhiteSpace(config.ApiToken))
+        if (string.IsNullOrWhiteSpace(serverUrl) || string.IsNullOrWhiteSpace(apiToken))
         {
             _logger.LogDebug("MediaShelf: not configured, skipping {Path}", path);
             return;
@@ -47,11 +46,11 @@ public class MediaShelfClient
         try
         {
             var client = _httpClientFactory.CreateClient();
-            using var request = new HttpRequestMessage(HttpMethod.Post, config.ServerUrl.TrimEnd('/') + path)
+            using var request = new HttpRequestMessage(HttpMethod.Post, serverUrl.TrimEnd('/') + path)
             {
                 Content = new StringContent(body.ToJsonString(), Encoding.UTF8, "application/json"),
             };
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", config.ApiToken);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiToken);
 
             using var response = await client.SendAsync(request).ConfigureAwait(false);
             if (!response.IsSuccessStatusCode)
