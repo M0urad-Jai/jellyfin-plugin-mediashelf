@@ -49,4 +49,7 @@ public static class ItemMapper
         Series => "shows",
         _ => null,
     };
+
+    /// <summary>True if any provider id has been populated. Used to defer collection sync until metadata providers run.</summary>
+    public static bool HasProviderIds(BaseItem item) => item.ProviderIds.Count > 0;
 }
