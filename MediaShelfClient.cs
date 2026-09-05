@@ -45,6 +45,8 @@ public class MediaShelfClient
 
         try
         {
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+
             var client = _httpClientFactory.CreateClient();
             using var request = new HttpRequestMessage(HttpMethod.Post, serverUrl.TrimEnd('/') + path)
             {
@@ -52,12 +54,18 @@ public class MediaShelfClient
             };
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiToken);
 
-            using var response = await client.SendAsync(request).ConfigureAwait(false);
+            using var response = await client.SendAsync(request, cts.Token).ConfigureAwait(false);
+            _logger.LogDebug("MediaShelf {Path} -> {Status}", path, response.StatusCode);
             if (!response.IsSuccessStatusCode)
             {
                 var responseBody = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                 _logger.LogWarning("MediaShelf {Path} returned {Status}: {Body}", path, response.StatusCode, responseBody);
             }
+        }
+        catch (OperationCanceledException) when (!string.IsNullOrWhiteSpace(path))
+        {
+            // Most likely MediaShelf is unreachable; this is not a server-side error.
+            _logger.LogWarning("MediaShelf {Path} timed out", path);
         }
         catch (Exception ex)
         {
