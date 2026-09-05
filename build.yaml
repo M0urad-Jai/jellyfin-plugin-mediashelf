@@ -1,6 +1,6 @@
 name: "MediaShelf Sync"
 guid: "b6e2c8a4-1f2d-4a3e-9c7b-8e6d5f4a3b2c"
-version: "0.1.0.0"
+version: "0.2.0.0"
 targetAbi: "10.11.0.0"
 framework: "net9.0"
 overview: "Syncs your Jellyfin library, watch history, ratings, and playback progress to a MediaShelf instance."
@@ -15,5 +15,23 @@ owner: "mediashelf"
 artifacts:
   - "Jellyfin.Plugin.MediaShelf.dll"
 changelog: |
+  ## v0.2.0.0
+  - Fix: ratings no longer re-sent on every playback-progress event; only on
+    `UpdateUserRating` saves. Massive drop in MediaShelf traffic during
+    playback.
+  - Fix: per-movie throttle dict no longer leaks. Sliding expiration via
+    `IMemoryCache` evicts idle entries automatically.
+  - Fix: newly added items are now deferred until metadata providers
+    populate `ProviderIds`, so MediaShelf entries carry the real TMDB/IMDb
+    id instead of falling back to title+year.
+  - Fix: HTTP requests now have a 10s timeout (was the `HttpClient`
+    default of 100s) and timeout failures log a "timed out" warning
+    instead of an exception.
+  - Internal: `MediaShelfClient` is now DI-registered and constructor-
+    injected into `SyncService`; no more `Plugin.Instance` reach-in.
+  - Internal: status codes in logs render as numeric (`400`) instead of
+    enum names (`BadRequest`).
+  - Tests: 24 xUnit tests covering `ItemMapper` and `MediaShelfClient`,
+    including a DI activation regression test.
   ## v0.1.0.0
   - Initial public release: collection sync, watch history, ratings, movie playback progress.

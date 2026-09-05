@@ -1,6 +1,6 @@
 {
   "category": "Sync",
-  "changelog": "0.1.0.0: Initial public release: collection sync, watch history, ratings, movie playback progress.",
+  "changelog": "0.2.0.0: Bug-fix release. Ratings no longer re-sent on every progress save; throttle dict leaks fixed; ItemAdded is now deferred until provider IDs land; 10s HTTP timeout. MediaShelfClient is now DI-registered. 24 xUnit tests added. See GitHub release notes for details.",
   "description": "Syncs your Jellyfin library, watch history, ratings, and playback progress to a MediaShelf instance.",
   "guid": "b6e2c8a4-1f2d-4a3e-9c7b-8e6d5f4a3b2c",
   "name": "MediaShelf Sync",
@@ -10,5 +10,5 @@
   "autoUpdate": false,
   "targetAbi": "10.11.0.0",
   "timestamp": "2026-09-05T00:00:00Z",
-  "version": "0.1.0.0"
+  "version": "0.2.0.0"
 }
