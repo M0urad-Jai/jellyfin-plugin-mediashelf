@@ -81,7 +81,10 @@ public class SyncService : IHostedService
                     break;
             }
 
-            if (config.SyncRatings && e.UserData.Rating.HasValue && e.Item is Movie or Series)
+            if (config.SyncRatings
+                && e.SaveReason == UserDataSaveReason.UpdateUserRating
+                && e.UserData.Rating.HasValue
+                && e.Item is Movie or Series)
             {
                 var resource = ItemMapper.ResourceFor(e.Item);
                 if (resource is not null)
