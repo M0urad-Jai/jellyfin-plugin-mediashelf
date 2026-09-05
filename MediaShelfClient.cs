@@ -65,7 +65,7 @@ public class MediaShelfClient
                 _logger.LogWarning("MediaShelf {Path} returned {Status}: {Body}", path, status, responseBody);
             }
         }
-        catch (OperationCanceledException) when (!string.IsNullOrWhiteSpace(path))
+        catch (OperationCanceledException)
         {
             // Most likely MediaShelf is unreachable; this is not a server-side error.
             _logger.LogWarning("MediaShelf {Path} timed out", path);

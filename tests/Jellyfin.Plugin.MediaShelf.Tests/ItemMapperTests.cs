@@ -2,7 +2,6 @@ using System.Text.Json.Nodes;
 using MediaBrowser.Controller.Entities.Audio;
 using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Entities.TV;
-using Jellyfin.Plugin.MediaShelf;
 
 namespace Jellyfin.Plugin.MediaShelf.Tests;
 

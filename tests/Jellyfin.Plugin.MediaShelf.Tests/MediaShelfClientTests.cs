@@ -4,7 +4,6 @@ using System.Text;
 using System.Text.Json.Nodes;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Jellyfin.Plugin.MediaShelf;
 
 namespace Jellyfin.Plugin.MediaShelf.Tests;
 
@@ -118,6 +117,9 @@ public class MediaShelfClientTests
         var body = JsonNode.Parse(handler.LastBody!);
         Assert.NotNull(body!["movies"]);
         Assert.IsType<JsonArray>(body["movies"]);
+        var entry = (JsonNode?)((JsonArray)body["movies"]!)[0];
+        Assert.NotNull(entry);
+        Assert.Equal(4.0, (double?)entry!["rating"]);
     }
 
     [Fact]
