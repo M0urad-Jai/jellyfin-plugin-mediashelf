@@ -7,6 +7,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.Entities;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -18,7 +19,7 @@ public class SyncService : IHostedService
     private readonly IUserDataManager _userDataManager;
     private readonly ILogger<SyncService> _logger;
     private readonly MediaShelfClient _client;
-    private readonly ConcurrentDictionary<Guid, DateTime> _lastProgressPush = new();
+    private readonly IMemoryCache _progressCache;
 
     // ItemAdded can fire before metadata providers populate ProviderIds.
     // Hold the id and wait for ItemUpdated to land before pushing to /sync/collection,
@@ -31,12 +32,14 @@ public class SyncService : IHostedService
         ILibraryManager libraryManager,
         IUserDataManager userDataManager,
         MediaShelfClient client,
+        IMemoryCache progressCache,
         ILogger<SyncService> logger)
     {
         _libraryManager = libraryManager;
         _userDataManager = userDataManager;
         _logger = logger;
         _client = client;
+        _progressCache = progressCache;
     }
 
     public Task StartAsync(CancellationToken cancellationToken)
@@ -181,9 +184,11 @@ public class SyncService : IHostedService
     private bool ShouldPushProgress(Guid itemId)
     {
         var throttle = TimeSpan.FromSeconds(Math.Max(5, Plugin.Instance?.Configuration.ProgressThrottleSeconds ?? 30));
-        var now = DateTime.UtcNow;
-        if (_lastProgressPush.TryGetValue(itemId, out var last) && now - last < throttle) return false;
-        _lastProgressPush[itemId] = now;
+        // Sliding expiration: each access resets the eviction clock to 2*throttle,
+        // so a movie being watched stays throttled, and an idle movie falls out
+        // of the cache without manual cleanup.
+        if (_progressCache.TryGetValue(itemId, out _)) return false;
+        _progressCache.Set(itemId, true, new MemoryCacheEntryOptions { SlidingExpiration = TimeSpan.FromTicks(throttle.Ticks * 2) });
         return true;
     }
 
