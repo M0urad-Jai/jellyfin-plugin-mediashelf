@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>MediaShelf Sync</title>
+</head>
+<body>
+  <div id="MediaShelfConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-checkbox">
+    <div data-role="content">
+      <div class="content-primary">
+        <form id="MediaShelfConfigForm">
+          <div class="verticalSection">
+            <h2>MediaShelf Sync</h2>
+            <p>Connects this server to your MediaShelf account. Generate a token in MediaShelf under Settings → API.</p>
+          </div>
+
+          <div class="inputContainer">
+            <label class="inputLabel" for="ServerUrl">MediaShelf URL</label>
+            <input is="emby-input" type="url" id="ServerUrl" placeholder="https://mediashelf.example.com" required />
+          </div>
+
+          <div class="inputContainer">
+            <label class="inputLabel" for="ApiToken">API Token</label>
+            <input is="emby-input" type="password" id="ApiToken" required />
+          </div>
+
+          <div class="checkboxContainer checkboxContainer-withDescription">
+            <label>
+              <input is="emby-checkbox" type="checkbox" id="SyncCollection" />
+              <span>Sync new library items</span>
+            </label>
+          </div>
+          <div class="checkboxContainer checkboxContainer-withDescription">
+            <label>
+              <input is="emby-checkbox" type="checkbox" id="SyncPlayback" />
+              <span>Sync watch history and playback progress</span>
+            </label>
+          </div>
+          <div class="checkboxContainer checkboxContainer-withDescription">
+            <label>
+              <input is="emby-checkbox" type="checkbox" id="SyncRatings" />
+              <span>Sync ratings</span>
+            </label>
+          </div>
+
+          <div>
+            <button is="emby-button" type="submit" class="raised button-submit block emby-button">
+              <span>Save</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    (function () {
+      var PluginId = "b6e2c8a4-1f2d-4a3e-9c7b-8e6d5f4a3b2c";
+
+      function load(view) {
+        Dashboard.showLoadingMsg();
+        ApiClient.getPluginConfiguration(PluginId).then(function (config) {
+          view.querySelector("#ServerUrl").value = config.ServerUrl || "";
+          view.querySelector("#ApiToken").value = config.ApiToken || "";
+          view.querySelector("#SyncCollection").checked = config.SyncCollection !== false;
+          view.querySelector("#SyncPlayback").checked = config.SyncPlayback !== false;
+          view.querySelector("#SyncRatings").checked = config.SyncRatings !== false;
+          Dashboard.hideLoadingMsg();
+        });
+      }
+
+      function save(view) {
+        Dashboard.showLoadingMsg();
+        ApiClient.getPluginConfiguration(PluginId).then(function (config) {
+          config.ServerUrl = view.querySelector("#ServerUrl").value.replace(/\/+$/, "");
+          config.ApiToken = view.querySelector("#ApiToken").value;
+          config.SyncCollection = view.querySelector("#SyncCollection").checked;
+          config.SyncPlayback = view.querySelector("#SyncPlayback").checked;
+          config.SyncRatings = view.querySelector("#SyncRatings").checked;
+          ApiClient.updatePluginConfiguration(PluginId, config).then(function (result) {
+            Dashboard.processPluginConfigurationUpdateResult(result);
+          });
+        });
+      }
+
+      document.querySelector("#MediaShelfConfigPage").addEventListener("pageshow", function () {
+        load(this);
+      });
+      document.querySelector("#MediaShelfConfigForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+        save(document.querySelector("#MediaShelfConfigPage"));
+        return false;
+      });
+    })();
+  </script>
+</body>
+</html>

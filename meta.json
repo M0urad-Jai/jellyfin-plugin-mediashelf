@@ -1,0 +1,14 @@
+{
+  "category": "Sync",
+  "changelog": "0.1.0.0: Initial public release: collection sync, watch history, ratings, movie playback progress.",
+  "description": "Syncs your Jellyfin library, watch history, ratings, and playback progress to a MediaShelf instance.",
+  "guid": "b6e2c8a4-1f2d-4a3e-9c7b-8e6d5f4a3b2c",
+  "name": "MediaShelf Sync",
+  "overview": "Syncs your library, watch history, ratings, and playback progress to MediaShelf.",
+  "owner": "mediashelf",
+  "status": "Active",
+  "autoUpdate": false,
+  "targetAbi": "10.11.0.0",
+  "timestamp": "2026-09-05T00:00:00Z",
+  "version": "0.1.0.0"
+}

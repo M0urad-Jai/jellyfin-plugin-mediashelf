@@ -1,0 +1,19 @@
+name: "MediaShelf Sync"
+guid: "b6e2c8a4-1f2d-4a3e-9c7b-8e6d5f4a3b2c"
+version: "0.1.0.0"
+targetAbi: "10.11.0.0"
+framework: "net9.0"
+overview: "Syncs your Jellyfin library, watch history, ratings, and playback progress to a MediaShelf instance."
+description: >
+  Pushes newly added movies/shows into your MediaShelf collection, logs watch
+  history (including per-episode), syncs ratings, and reports playback
+  progress for in-progress movies. Configure your MediaShelf URL and a
+  personal access token (generated in MediaShelf under Settings → API) from
+  the plugin's settings page in the Jellyfin dashboard.
+category: "Sync"
+owner: "mediashelf"
+artifacts:
+  - "Jellyfin.Plugin.MediaShelf.dll"
+changelog: |
+  ## v0.1.0.0
+  - Initial public release: collection sync, watch history, ratings, movie playback progress.
