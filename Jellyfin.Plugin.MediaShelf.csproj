@@ -19,6 +19,8 @@
     <None Include="meta.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <!-- Keep the test project's source out of the plugin's compile glob. -->
+    <Compile Remove="tests/**/*.cs" />
   </ItemGroup>
 
 </Project>

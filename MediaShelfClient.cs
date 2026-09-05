@@ -55,11 +55,14 @@ public class MediaShelfClient
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiToken);
 
             using var response = await client.SendAsync(request, cts.Token).ConfigureAwait(false);
-            _logger.LogDebug("MediaShelf {Path} -> {Status}", path, response.StatusCode);
+            // Cast to int: HttpStatusCode.ToString() returns the name (e.g. "BadRequest"),
+            // and a numeric status is what operators expect to see in the log.
+            var status = (int)response.StatusCode;
+            _logger.LogDebug("MediaShelf {Path} -> {Status}", path, status);
             if (!response.IsSuccessStatusCode)
             {
                 var responseBody = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                _logger.LogWarning("MediaShelf {Path} returned {Status}: {Body}", path, response.StatusCode, responseBody);
+                _logger.LogWarning("MediaShelf {Path} returned {Status}: {Body}", path, status, responseBody);
             }
         }
         catch (OperationCanceledException) when (!string.IsNullOrWhiteSpace(path))
